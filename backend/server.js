@@ -1,23 +1,12 @@
-require("dotenv").config()
-
 const express = require("express")
-
+const verificarRouter = require("./routes/verificar")
 const cors = require("cors")
 
-const verificarRuta = require("./routes/verificar")
-
 const app = express()
-
-app.use(cors())
+app.use(cors()) // permite que tu frontend en otro puerto acceda
 app.use(express.json())
 
-app.use("/api", verificarRuta)
+app.use("/api", verificarRouter)
 
-app.get("/", (req, res) =>{
-    res.send("Servidor RAG funcionando")
-})
-
-app.listen(3000, () => {
-    console.log("Servidor iniciado en el puerto http://localhost:3000")
-})
-
+const PORT = 3000
+app.listen(PORT, () => console.log(`Servidor iniciado en http://localhost:${PORT}`))
