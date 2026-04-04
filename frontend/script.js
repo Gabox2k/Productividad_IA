@@ -1,5 +1,7 @@
 async function verificar(){
 
+console.log("Boton presionado")
+
 const texto = document.getElementById("texto").value
 
 const res = await fetch("http://localhost:3000/api/verificar",{

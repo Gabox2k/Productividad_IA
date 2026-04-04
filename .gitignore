@@ -1,0 +1,49 @@
+# =====================================
+# Node.js (Backend)
+# =====================================
+node_modules/
+npm-debug.log
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.env
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# =====================================
+# Frontend (React, Angular, Vue, etc.)
+# =====================================
+dist/
+build/
+.cache/
+.vscode/
+.idea/
+*.local
+*.tsbuildinfo
+
+# =====================================
+# OS files
+# =====================================
+.DS_Store
+Thumbs.db
+
+# =====================================
+# IDE / Editor
+# =====================================
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.vscode/
+.idea/
+*.iml
+
+# =====================================
+# Otros
+# =====================================
+*.bak
+*.tmp
