@@ -14,6 +14,10 @@ router.post("/verificar", async (req, res) => {
         const contexto = construirContexto(texto, fuentes)
         const resultado = await analizar(contexto)
 
+        if (resultado.error){
+            return res.json({ mensaje: resultado.error})
+        }
+
         res.json(resultado) // devuelve JSON limpio al frontend
     } catch (err) {
         console.error(err)

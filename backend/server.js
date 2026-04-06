@@ -3,8 +3,12 @@ const verificarRouter = require("./routes/verificar")
 const cors = require("cors")
 
 const app = express()
-app.use(cors()) // permite que tu frontend en otro puerto acceda
+app.use(cors()) // El frontend accede 
 app.use(express.json())
+
+app.get("/", (req,res) =>{
+    res.send("Servidor funcionando")
+})
 
 app.use("/api", verificarRouter)
 
