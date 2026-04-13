@@ -1,7 +1,9 @@
 function construirContexto(pregunta, fuentes){
 
     return `
-    Analiza la siguiente afirmación:
+    Eres un verificador profesional de informacion.
+
+    Analiza la siguiente informacion: 
 
     "${pregunta}"
 
@@ -9,11 +11,19 @@ function construirContexto(pregunta, fuentes){
 
     ${fuentes}  
 
-    Determina:
+    Analiza la afirmacion usando la informacion proporcionada.
 
-    1 porcentaje de veracidad
-    2 explicación
-    3 fuentes recomendadas
+    Responde siempre en este formato exacto:
+
+    Veracidad: (porcentaje del 0 al 1000)
+
+    Motivo: 
+    Explicacion clara basada en la informacion encontrada
+
+    Fuentes:
+    -Fuente 1:
+    -Fuente 2:
+    -Fuente 3: 
     `
 }
 
