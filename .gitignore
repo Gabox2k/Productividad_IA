@@ -9,6 +9,9 @@ pnpm-debug.log*
 .env
 .DS_Store
 
+# ignorar carpeta actualizar
+backend/actualizar/
+
 # Logs
 logs/
 *.log

@@ -2,12 +2,17 @@ async function verificar() {
     console.log("Boton presionado")
 
     const texto = document.getElementById("texto").value
+    const imagen = document.getElementById("imagen").files[0]
+
+    const formData = new FormData()
+    formData.append("texto", texto)
+    formData.append("imagen", imagen) 
+
 
     try {
         const res = await fetch("http://localhost:3000/api/verificar", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ texto })
+            body: formData
         })
 
         if (!res.ok) {
@@ -18,7 +23,7 @@ async function verificar() {
 
         const data = await res.json()
         document.getElementById("resultado").innerText =
-            data.choices ? data.choices[0].message.content : JSON.stringify(data)
+            JSON.stringify(data.resultado, null, 2)
     } catch (err) {
         console.error(err)
         document.getElementById("resultado").innerText = "❌ Error al procesar la solicitud"
