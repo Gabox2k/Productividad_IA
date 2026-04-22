@@ -1,30 +1,33 @@
-function construirContexto(pregunta, fuentes){
+function construirContexto(pregunta, fuentes) {
+
+    const fuentesTexto = Array.isArray(fuentes)
+        ? fuentes.map((f, i) => `Fuente ${i + 1}: ${f}`).join("\n")
+        : String(fuentes);
 
     return `
-    Eres un verificador profesional de informacion.
+Eres un sistema de verificación de información.
 
-    Analiza la siguiente informacion: 
+Tu tarea es analizar si la afirmación es verdadera o falsa usando SOLO la información proporcionada.
 
-    "${pregunta}"
+AFIRMACIÓN:
+${pregunta}
 
-    Informacion encontrada:
+INFORMACIÓN DISPONIBLE:
+${fuentesTexto}
 
-    ${fuentes}  
+RESPONDE SOLO en JSON con este formato exacto:
 
-    Analiza la afirmacion usando la informacion proporcionada.
+{
+  "veracidad": 0-100,
+  "motivo": "explicación clara basada en las fuentes",
+  "fuentes": ["fuente1", "fuente2"]
+}
 
-    Responde siempre en este formato exacto:
-
-    Veracidad: (porcentaje del 0 al 1000)
-
-    Motivo: 
-    Explicacion clara basada en la informacion encontrada
-
-    Fuentes:
-    -Fuente 1:
-    -Fuente 2:
-    -Fuente 3: 
-    `
+REGLAS:
+- No inventes información
+- No uses texto fuera del JSON
+- Si no hay suficiente información, baja la veracidad
+`;
 }
 
 module.exports = { construirContexto }

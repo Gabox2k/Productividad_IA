@@ -18,32 +18,7 @@ app.get("/", (req,res) =>{
     res.send("Servidor funcionando")
 })
 
-app.post("/api/verificar", actualizar.single("imagen"), async (req, res) => {
-    
-    const texto = req.body.texto || ""
-    const imagen = req.file || null
-
-    console.log("texto:", texto)
-    console.log("imagen:", imagen)
-
-    try {
-        const resultado = imagen
-            ? await analizar(texto, imagen)
-            : await analizar(texto)
-        
-        return res.json({
-            resultado
-        })
-    } catch(err){
-        console.error(err)
-        res.json({resultado: "Error en la Ia "})
-    }
- 
-
-  
-})
-
 app.use("/api", verificarRouter)
 
-const PORT = 3000
+const PORT = 5000
 app.listen(PORT, () => console.log(`Servidor iniciado en http://localhost:${PORT}`))

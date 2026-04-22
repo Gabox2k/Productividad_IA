@@ -7,16 +7,18 @@ const { analizar } = require("../services/aiService")
 
 const router = express.Router()
 
-router.post("/verificar", async (req, res) => {
+const upload = multer({ dest: "actualizar/" })
+
+router.post("/verificar", upload.single("imagen"), async (req, res) => {
     try {
         const texto = req.body.texto
         const imagen = req.file
 
 
-        if (!texto) return res.status(400).json({ error: "No se envió texto ni la imagen" })
+        if (!texto && !imagen) return res.status(400).json({ error: "No se envió texto ni la imagen" })
 
-        const fuentes = await buscarInformacion(texto)
-        const contexto = construirCojntexto(texto, fuentes)
+        const fuentes = texto ? await buscarInformacion(texto) : []
+        const contexto = texto ? construirContexto(texto, fuentes) : ""
         const resultado = await analizar(contexto, imagen)
 
         if (resultado.error){

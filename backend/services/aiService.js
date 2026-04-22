@@ -1,18 +1,14 @@
 const axios = require("axios");
 const fs = require("fs");
-require("dotenv").config();
-
-const API_KEY = process.env.ApiKey;
-
-const MODELO = "google/gemma-4-31b-it:free";
 
 async function analizar(prompt, imagen = null) {
 
   try {
 
+    const modelo = imagen ? "llava" : "llama3";
+
     let messages;
 
-    // 📸 SI HAY IMAGEN
     if (imagen) {
 
       const buffer = fs.readFileSync(imagen.path);
@@ -20,21 +16,12 @@ async function analizar(prompt, imagen = null) {
 
       messages = [{
         role: "user",
-        content: [
-          {
-            type: "text",
-            text: prompt
-          },
-          {
-            type: "image_url",
-            image_url: {
-              url: `data:image/jpeg;base64,${base64Image}`
-            }
-          }
-        ]
+        content: prompt,
+        images: [base64Image]
       }];
 
     } else {
+
       messages = [{
         role: "user",
         content: prompt
@@ -42,44 +29,29 @@ async function analizar(prompt, imagen = null) {
     }
 
     const respuesta = await axios.post(
-      "https://openrouter.ai/api/v1/chat/completions",
+      "http://localhost:11434/api/chat",
       {
-        model: MODELO,
-        messages
-      },
-      {
-        headers: {
-          "Authorization": `Bearer ${API_KEY}`,
-          "Content-Type": "application/json"
-        }
+        model: modelo,
+        messages,
+        stream: false
       }
     );
 
     const contenido =
-      respuesta.data?.choices?.[0]?.message?.content || "";
+      respuesta.data?.message?.content || "";
 
-    try {
-      return JSON.parse(contenido);
-    } catch (e) {
-      return {
-        veracidad: null,
-        motivo: contenido,
-        fuentes: []
-      };
-    }
+    return {
+      veracidad: null,
+      motivo: contenido,
+      fuentes: []
+    };
 
   } catch (err) {
 
-    const status = err.response?.status;
-
-    if (status === 401) {
-      return { error: "Problema con la API Key" };
-    }
-
-    console.error("Error IA:", err.response?.data || err.message);
+    console.error("ERROR REAL:", err.response?.data || err.message);
 
     return {
-      error: "Error al procesar con OpenRouter"
+      error: "Error al procesar con Ollama"
     };
   }
 }
