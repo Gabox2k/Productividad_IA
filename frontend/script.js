@@ -6,7 +6,6 @@ async function verificar() {
     const estado = document.getElementById("estado")
     const resultado = document.getElementById("resultado")
 
-    // ⏳ Mostrar mensaje mientras procesa
     estado.innerHTML = "⏳ La IA está pensando..."
     resultado.innerText = ""
 

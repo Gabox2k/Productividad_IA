@@ -7,7 +7,7 @@ function construirContexto(pregunta, fuentes) {
     return `
 Eres un sistema de verificación de información.
 
-Tu tarea es analizar si la afirmación es verdadera o falsa usando SOLO la información proporcionada.
+Analiza la afirmación usando SOLO la información proporcionada.
 
 AFIRMACIÓN:
 ${pregunta}
@@ -15,19 +15,26 @@ ${pregunta}
 INFORMACIÓN DISPONIBLE:
 ${fuentesTexto}
 
-RESPONDE SOLO en JSON con este formato exacto:
+⚠️ IMPORTANTE:
+- Responde ÚNICAMENTE con un JSON válido
+- NO incluyas texto antes ni después
+- NO pongas el JSON dentro de comillas
+- NO uses saltos de línea innecesarios
+- NO devuelvas texto como string JSON dentro de otro campo
+
+FORMATO OBLIGATORIO:
 
 {
-  "veracidad": 0-100,
+  "veracidad": numero entre 0 y 100,
   "motivo": "explicación clara basada en las fuentes",
   "fuentes": ["fuente1", "fuente2"]
 }
 
 REGLAS:
 - No inventes información
-- No uses texto fuera del JSON
-- Si no hay suficiente información, baja la veracidad
+- Usa solo las fuentes dadas
+- Si no hay suficiente información, reduce la veracidad
 `;
 }
 
-module.exports = { construirContexto }
+module.exports = { construirContexto };

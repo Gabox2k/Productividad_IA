@@ -37,13 +37,43 @@ async function analizar(prompt, imagen = null) {
       }
     );
 
-    const contenido =
-      respuesta.data?.message?.content || "";
+    const contenido = respuesta.data?.message?.content || "";
+
+    let veracidad = null;
+    let motivo = contenido;
+    let fuentes = [];
+
+    try {
+      const limpio = contenido
+        .replace(/\\n/g, " ")
+        .replace(/\\"/g, '"')
+        .replace(/\\\\/g, "\\")
+        .trim();
+
+      const parsed = JSON.parse(limpio);
+
+      if (typeof parsed === "object" && parsed !== null) {
+        veracidad = parsed.veracidad ?? parsed.veracity ?? null;
+        motivo = parsed.motivo ?? parsed.reason ?? parsed.motivation ?? contenido;
+        fuentes = parsed.fuentes ?? parsed.sources ?? parsed.fuente ?? [];
+      }
+    } catch (e) {
+      motivo = contenido
+        .replace(/\\n/g, " ")
+        .replace(/\\"/g, '"')
+        .replace(/\\\\/g, "\\")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    if (!Array.isArray(fuentes)) {
+      fuentes = fuentes ? [fuentes] : [];
+    }
 
     return {
-      veracidad: null,
-      motivo: contenido,
-      fuentes: []
+      veracidad,
+      motivo,
+      fuentes
     };
 
   } catch (err) {
