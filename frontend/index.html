@@ -1,15 +1,34 @@
-<input id="texto" placeholder="Escribe una afirmación">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verificador de IA</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Verificador de Contenido con IA</h1>
+    
+    <input id="texto" placeholder="Escribe una afirmación o pega un link de video">
 
-<br><br>
+    <br><br>
 
-<input type="file" id="imagen" accept="image/*,video/*">
+    <input id="videoUrl" placeholder="Pega aquí el link del video">
 
-<br><br>
+    <br><br>
 
-<button onclick="verificar()">Verificar</button>
+    <input type="file" id="imagen" accept="image/*,video/*">
 
-<div id="estado"></div>
+    <br><br>
 
-<div id="resultado"></div>
+    <button onclick="verificar()">Verificar</button>
 
-<script src="script.js"></script>
+    <div id="estado"></div>
+
+    <div id="resultado"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
