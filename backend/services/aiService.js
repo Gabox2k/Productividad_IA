@@ -1,15 +1,16 @@
 const axios = require("axios")
 const { promisify } = require("util")
-const { exec: execCb } = require("child_process")
+const { exec: execCb, execFile: execFileCb } = require("child_process")
 const fs = require("fs")
 const path = require("path")
 
 const exec = promisify(execCb)
+const execFile = promisify(execFileCb)
 const FRAMES_DIR = path.resolve(__dirname, "../frames")
 const TEMP_DIR = path.resolve(__dirname, "../actualizar")
 const OLLAMA_URL = "http://localhost:11434/api/chat"
 const MODEL_NAME = "llava"
-const FFMPEG = "C:\\Users\\sforz\\OneDrive\\Escritorio\\ffmpeg-8.1.1\\ffmpeg-8.1.1\\ffmpeg-8.1.1-essentials_build\\bin\\ffmpeg.exe"
+const FFMPEG = "C:\\Users\\sforz\\OneDrive\\Escritorio\\Tesis\\ffmpeg-8.1.1\\ffmpeg-8.1.1\\ffmpeg-8.1.1-essentials_build\\bin\\ffmpeg.exe"
 
 async function descargarVideo(url) {
   if (!fs.existsSync(TEMP_DIR)) {
@@ -50,12 +51,19 @@ async function extraerFrames(videoPath) {
   })
 
   const outputPattern = path.join(FRAMES_DIR, "frame_%03d.jpg")
-  
-  //Reducion de resolución y calidad para que Ollama no se cuelgue
-  const command = `"${FFMPEG}" -y -hide_banner -loglevel error -i "${videoPath}" -vf "fps=1/5,scale=320:-1" -q:v 5 "${outputPattern}"`
-  
-  console.log("Extrayendo frames:", command)
-  await exec(command, { timeout: 180000 })
+
+  const ffmpegArgs = [
+    "-y",
+    "-hide_banner",
+    "-loglevel", "error",
+    "-i", videoPath,
+    "-vf", "fps=1/5,scale=320:-1",
+    "-q:v", "5",
+    outputPattern
+  ]
+
+  console.log("Extrayendo frames con FFmpeg...")
+  await execFile(FFMPEG, ffmpegArgs, { timeout: 180000 })
 
   return fs
     .readdirSync(FRAMES_DIR)

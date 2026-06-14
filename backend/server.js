@@ -3,6 +3,7 @@ const cors = require("cors")
 const path = require("path")
 
 const verificarRouter = require("./routes/verificar")
+const bachesRouter = require("./routes/baches")
 
 const app = express()
 
@@ -21,6 +22,7 @@ app.get(/\.(js|css|png|jpg|jpeg|gif|ico|svg)$/i, (req, res) => {
 })
 
 app.use("/api", verificarRouter)
+app.use("/api", bachesRouter)
 
 const PORT = 5000
 app.listen(PORT, () => console.log(`Servidor iniciado en http://localhost:${PORT}`))
