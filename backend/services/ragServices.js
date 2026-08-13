@@ -1,9 +1,12 @@
+// Funcion para construir el contexto/prompt para el analisis RAG (Retrieval-Augmented Generation)
 function construirContexto(pregunta, fuentes) {
 
+    // Convertir las fuentes a texto formateado
     const fuentesTexto = Array.isArray(fuentes)
         ? fuentes.map((f, i) => `Fuente ${i + 1}: ${f}`).join("\n")
         : String(fuentes);
 
+    // Construir el prompt detallado para el analisis
     return `
 Eres un sistema de verificación de información.
 
@@ -37,4 +40,5 @@ REGLAS:
 `;
 }
 
+// Exportar la funcion
 module.exports = { construirContexto };
