@@ -5,28 +5,94 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verificador de IA</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
+    .container { max-width: 700px; margin: 0 auto; }
+    h1 { color: #333; }
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .card h2 { margin-top: 0; font-size: 1.2rem; color: #444; }
+    input[type="text"], input[type="url"] {
+      width: 100%; padding: 10px; margin: 6px 0 14px;
+      border: 1px solid #ccc; border-radius: 6px;
+      box-sizing: border-box; font-size: 14px;
+    }
+    input[type="file"] { margin: 6px 0 14px; }
+    button {
+      background: #4a90e2; color: white; border: none;
+      padding: 10px 24px; border-radius: 6px;
+      cursor: pointer; font-size: 15px;
+    }
+    button:disabled { background: #999; cursor: not-allowed; }
+    .estado { margin-top: 12px; font-style: italic; color: #666; }
+    .resultado { margin-top: 12px; white-space: pre-wrap; font-size: 14px; }
+
+    /* Tarjeta de resultado de bache */
+    .bache-card {
+      background: #fff8e1;
+      border-left: 5px solid #f5a623;
+      border-radius: 6px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+    .bache-card.bajo  { border-color: #4caf50; background: #f1f8f1; }
+    .bache-card.medio { border-color: #ff9800; background: #fff8e1; }
+    .bache-card.alto  { border-color: #f44336; background: #fff3f3; }
+    .bache-card.critico { border-color: #9c27b0; background: #fdf3ff; }
+    .nivel-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 1rem;
+      margin-bottom: 12px;
+    }
+    .bajo    .nivel-badge { background: #4caf50; color: white; }
+    .medio   .nivel-badge { background: #ff9800; color: white; }
+    .alto    .nivel-badge { background: #f44336; color: white; }
+    .critico .nivel-badge { background: #9c27b0; color: white; }
+    .bache-fila { margin: 6px 0; font-size: 14px; }
+    .bache-fila strong { color: #555; }
+  </style>
 </head>
 <body>
   <div class="container">
     <h1>Verificador de Contenido con IA</h1>
-    
-    <input id="texto" placeholder="Escribe una afirmación o pega un link de video">
 
-    <br><br>
+    <!-- Sección original: verificación de noticias -->
+    <div class="card">
+      <h2>Verificar Noticia o Video</h2>
 
-    <input id="videoUrl" placeholder="Pega aquí el link del video">
+      <input type="text" id="texto" placeholder="Escribe una afirmación o pega un link de video">
+      <input type="url" id="videoUrl" placeholder="Pega aquí el link del video (YouTube, TikTok, etc.)">
+      <input type="file" id="imagen" accept="image/*,video/*">
 
-    <br><br>
+      <button onclick="verificar()">Verificar</button>
 
-    <input type="file" id="imagen" accept="image/*,video/*">
+      <div id="estado" class="estado"></div>
+      <div id="resultado" class="resultado"></div>
+    </div>
 
-    <br><br>
+    <!-- Sección nueva: análisis de baches -->
+    <div class="card">
+      <h2>Analizar Bache en la Vía</h2>
+      <p style="color:#666; font-size:14px; margin-top:0;">
+        Subí una foto o video del bache y la IA evaluará su nivel de peligrosidad.
+      </p>
 
-    <button onclick="verificar()">Verificar</button>
+      <label style="font-size:14px; color:#555;">Foto o video del bache:</label>
+      <input type="file" id="archivoBache" accept="image/*,video/*">
 
-    <div id="estado"></div>
+      <button onclick="analizarBache()">Analizar Bache</button>
 
-    <div id="resultado"></div>
+      <div id="estadoBache" class="estado"></div>
+      <div id="resultadoBache"></div>
+    </div>
   </div>
 
   <script src="script.js"></script>

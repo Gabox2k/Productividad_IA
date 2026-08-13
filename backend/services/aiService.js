@@ -1,17 +1,18 @@
 // Importacion de modulos
 const axios = require("axios")
 const { promisify } = require("util")
-const { exec: execCb } = require("child_process")
+const { exec: execCb, execFile: execFileCb } = require("child_process")
 const fs = require("fs")
 const path = require("path")
 
 const exec = promisify(execCb)
+const execFile = promisify(execFileCb)
 const FRAMES_DIR = path.resolve(__dirname, "../frames")
 const TEMP_DIR = path.resolve(__dirname, "../actualizar")
 // URL y modelo de Ollama
 const OLLAMA_URL = "http://localhost:11434/api/chat"
 const MODEL_NAME = "llava"
-const FFMPEG = "C:\\Users\\sforz\\OneDrive\\Escritorio\\ffmpeg-8.1.1\\ffmpeg-8.1.1\\ffmpeg-8.1.1-essentials_build\\bin\\ffmpeg.exe"
+const FFMPEG = "C:\\Users\\sforz\\OneDrive\\Escritorio\\Tesis\\ffmpeg-8.1.1\\ffmpeg-8.1.1\\ffmpeg-8.1.1-essentials_build\\bin\\ffmpeg.exe"
 
 
 // Funcion para descargar video usando yt-dlp
@@ -64,13 +65,21 @@ async function extraerFrames(videoPath) {
 
   // Patron de salida para los frames
   const outputPattern = path.join(FRAMES_DIR, "frame_%03d.jpg")
-  
+
   // Comando FFmpeg: reducir resolucion y calidad para evitar sobrecargar Ollama
-  const command = `"${FFMPEG}" -y -hide_banner -loglevel error -i "${videoPath}" -vf "fps=1/5,scale=320:-1" -q:v 5 "${outputPattern}"`
-  
-  console.log("Extrayendo frames:", command)
+  const ffmpegArgs = [
+    "-y",
+    "-hide_banner",
+    "-loglevel", "error",
+    "-i", videoPath,
+    "-vf", "fps=1/5,scale=320:-1",
+    "-q:v", "5",
+    outputPattern
+  ]
+
+  console.log("Extrayendo frames con FFmpeg...")
   // Ejecutar FFmpeg con timeout
-  await exec(command, { timeout: 180000 })
+  await execFile(FFMPEG, ffmpegArgs, { timeout: 180000 })
 
   // Devolver lista de paths de frames ordenados
   return fs

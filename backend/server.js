@@ -4,6 +4,7 @@ const cors = require("cors")
 const path = require("path")
 
 const verificarRouter = require("./routes/verificar")
+const bachesRouter = require("./routes/baches")
 
 const app = express()
 
@@ -25,6 +26,7 @@ app.get(/\.(js|css|png|jpg|jpeg|gif|ico|svg)$/i, (req, res) => {
 
 // Usar las rutas de la API bajo /api
 app.use("/api", verificarRouter)
+app.use("/api", bachesRouter)
 
 // Puerto del servidor
 const PORT = 5000
