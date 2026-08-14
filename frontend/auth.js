@@ -59,3 +59,11 @@ function pintarTopbar(usuario) {
     const nombreEl = document.getElementById("topbarNombre")
     if (nombreEl) nombreEl.textContent = `Hola, ${usuario.nombre}`
 }
+
+// Escapa texto de origen del usuario (nombre, dirección, etc.) antes de insertarlo
+// en innerHTML, para evitar XSS persistente.
+function escaparHtml(texto) {
+    const div = document.createElement("div")
+    div.textContent = texto ?? ""
+    return div.innerHTML
+}

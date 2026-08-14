@@ -6,7 +6,9 @@ const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 // User-Agent identificable y un máximo de 1 solicitud por segundo.
 async function geocodificarDireccion(direccion) {
   const respuesta = await axios.get(NOMINATIM_URL, {
-    params: { q: direccion, format: "json", limit: 1 },
+    // countrycodes acota los resultados a Paraguay: sin esto, direcciones
+    // ambiguas o cortas ("España") pueden geocodificarse en otro país.
+    params: { q: direccion, format: "json", limit: 1, countrycodes: "py" },
     headers: { "User-Agent": "AnalizadorDeBaches/1.0 (uso local)" },
     timeout: 15000,
   })

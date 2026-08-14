@@ -77,7 +77,7 @@ function renderizarResultadoBache(data) {
     }[categoria] || "medio"
 
     const filas = [
-        ["Dirección", data.direccion],
+        ["Dirección", escaparHtml(data.direccion)],
         ["Nivel de peligro", `${nivel}/10`],
         ["Tamaño estimado", data.dimension_estimada],
         ["Profundidad estimada", data.profundidad_estimada],
@@ -127,15 +127,16 @@ function renderizarReporteItem(r) {
         "BAJO": "bajo", "MEDIO": "medio", "ALTO": "alto", "CRÍTICO": "critico", "CRITICO": "critico"
     }[categoria] || "medio"
 
+    const urlArchivo = `${API_BASE}${escaparHtml(r.archivo_url)}`
     const media = r.archivo_tipo === "video"
-        ? `<video class="bache-thumb" src="${API_BASE}${r.archivo_url}" controls></video>`
-        : `<img class="bache-thumb" src="${API_BASE}${r.archivo_url}" alt="Foto del bache">`
+        ? `<video class="bache-thumb" src="${urlArchivo}" controls></video>`
+        : `<img class="bache-thumb" src="${urlArchivo}" alt="Foto del bache">`
 
     return `
     <div class="bache-card ${claseCSS}">
       <span class="nivel-badge">⚠️ ${categoria} (${nivel}/10)</span>
       <span class="estado-badge ${r.estado}">${r.estado === "reparado" ? "Reparado" : "Pendiente"}</span>
-      <div class="bache-fila"><strong>Dirección:</strong> ${r.direccion}</div>
+      <div class="bache-fila"><strong>Dirección:</strong> ${escaparHtml(r.direccion)}</div>
       <div class="bache-fila"><strong>Descripción:</strong> ${r.descripcion || "-"}</div>
       ${media}
     </div>`

@@ -66,9 +66,10 @@ function pintarMarcadores(reportes) {
 }
 
 function popupHTML(r) {
+    const urlArchivo = `${API_BASE}${escaparHtml(r.archivo_url)}`
     const media = r.archivo_tipo === "video"
-        ? `<video src="${API_BASE}${r.archivo_url}" controls style="max-width:220px;"></video>`
-        : `<img src="${API_BASE}${r.archivo_url}" alt="Foto del bache" style="max-width:220px; border-radius:4px;">`
+        ? `<video src="${urlArchivo}" controls style="max-width:220px;"></video>`
+        : `<img src="${urlArchivo}" alt="Foto del bache" style="max-width:220px; border-radius:4px;">`
 
     const accion = r.estado === "reparado"
         ? `<span class="estado-badge reparado">Reparado</span>`
@@ -76,8 +77,8 @@ function popupHTML(r) {
 
     return `
     <div style="font-size:13px; max-width:240px;">
-      <strong>${r.direccion}</strong><br>
-      Reportado por: ${r.usuario_nombre}<br>
+      <strong>${escaparHtml(r.direccion)}</strong><br>
+      Reportado por: ${escaparHtml(r.usuario_nombre)}<br>
       Nivel: ${r.nivel_peligro || "?"}/10 (${r.categoria || "?"})<br>
       ${r.descripcion ? r.descripcion + "<br>" : ""}
       ${media}
@@ -94,9 +95,9 @@ function pintarLista(reportes) {
 
     lista.innerHTML = reportes.map(r => `
     <div class="reporte-lista-item">
-      <strong>${r.direccion}</strong>
+      <strong>${escaparHtml(r.direccion)}</strong>
       <span class="estado-badge ${r.estado}">${r.estado === "reparado" ? "Reparado" : "Pendiente"}</span><br>
-      Reportado por ${r.usuario_nombre} · Nivel ${r.nivel_peligro || "?"}/10 (${r.categoria || "?"})<br>
+      Reportado por ${escaparHtml(r.usuario_nombre)} · Nivel ${r.nivel_peligro || "?"}/10 (${r.categoria || "?"})<br>
       ${r.estado === "reparado" ? "" : `<button class="btn-reparar" onclick="marcarReparado(${r.id})">Bache reparado</button>`}
     </div>
   `).join("")
