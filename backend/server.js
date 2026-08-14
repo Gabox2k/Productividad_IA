@@ -1,9 +1,16 @@
 // Importar módulos necesarios
+require("dotenv").config()
+const crypto = require("crypto")
 const express = require("express")
 const cors = require("cors")
 const path = require("path")
 
-const verificarRouter = require("./routes/verificar")
+if (!process.env.JWT_SECRET) {
+  process.env.JWT_SECRET = crypto.randomBytes(32).toString("hex")
+  console.warn("JWT_SECRET no definido en .env: se generó uno temporal. Las sesiones se invalidarán al reiniciar el servidor. Definí JWT_SECRET en backend/.env para que persistan.")
+}
+
+const authRouter = require("./routes/auth")
 const bachesRouter = require("./routes/baches")
 
 const app = express()
@@ -13,19 +20,14 @@ app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// Ruta principal: servir el archivo index.html del frontend
-app.get("/", (req, res) => {
-  console.log("GET / - Sirviendo index.html")
-  res.sendFile(path.join(__dirname, "../frontend/index.html"))
-})
+// Servir el frontend (html, css, js) de forma estática, incluyendo index.html en "/"
+app.use(express.static(path.join(__dirname, "../frontend")))
 
-// Servir archivos estaticos especificos (CSS, JS, imágenes, etc.) desde el frontend
-app.get(/\.(js|css|png|jpg|jpeg|gif|ico|svg)$/i, (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend", req.url))
-})
+// Servir las fotos/videos persistidos de los reportes de baches
+app.use("/archivos-baches", express.static(path.join(__dirname, "uploads_baches")))
 
 // Usar las rutas de la API bajo /api
-app.use("/api", verificarRouter)
+app.use("/api", authRouter)
 app.use("/api", bachesRouter)
 
 // Puerto del servidor

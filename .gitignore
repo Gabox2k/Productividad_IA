@@ -13,6 +13,10 @@ pnpm-debug.log*
 # ignorar carpeta actualizar
 backend/actualizar/
 
+# base de datos local y archivos persistidos de reportes de baches
+backend/data/
+backend/uploads_baches/
+
 # Logs
 logs/
 *.log

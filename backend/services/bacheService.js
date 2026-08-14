@@ -3,6 +3,7 @@ const { promisify } = require("util")
 const { execFile: execFileCb } = require("child_process")
 const fs = require("fs")
 const path = require("path")
+const sharp = require("sharp")
 
 const execFile = promisify(execFileCb)
 const FRAMES_DIR = path.resolve(__dirname, "../frames_baches")
@@ -11,8 +12,11 @@ const OLLAMA_URL = "http://localhost:11434/api/chat"
 const MODEL_NAME = "llava"
 const FFMPEG = "C:\\Users\\sforz\\OneDrive\\Escritorio\\Tesis\\ffmpeg-8.1.1\\ffmpeg-8.1.1\\ffmpeg-8.1.1-essentials_build\\bin\\ffmpeg.exe"
 
-function imageToBase64(filePath) {
-  return fs.readFileSync(filePath).toString("base64")
+async function imageToBase64(filePath) {
+  // Ollama/llava no soporta todos los formatos de imagen (ej. WEBP), por lo
+  // que se recodifica siempre a PNG antes de enviarla.
+  const buffer = await sharp(filePath).png().toBuffer()
+  return buffer.toString("base64")
 }
 
 async function extraerFramesBache(videoPath) {
@@ -49,32 +53,51 @@ Reply strictly in this format (no extra text):
 SIZE: [answer]
 DEPTH: [answer]
 LOCATION: [answer]
-DAMAGE: [answer]
-DESCRIPTION: [one sentence describing what you see in Spanish]`
+DAMAGE: [answer]`
+
+// El modelo (llava) sigue de forma confiable estas opciones fijas en inglés,
+// pero no respeta de forma consistente pedidos de idioma en texto libre. Por
+// eso las categorías se detectan en inglés y se traducen acá para que la
+// respuesta mostrada al usuario esté siempre en español.
+const OPCIONES_TAMANO = [
+  { test: t => t.includes("large") || t.includes("bigger than a backpack"), puntos: 3, es: "Grande (más grande que una mochila)", corto: "grande" },
+  { test: t => t.includes("medium") || t.includes("backpack-sized"), puntos: 2, es: "Mediano (tamaño de una mochila)", corto: "mediano" },
+  { test: t => t.includes("small") || t.includes("shoe-sized"), puntos: 1, es: "Pequeño (tamaño de un zapato)", corto: "pequeño" },
+  { test: t => t.includes("tiny") || t.includes("fits in a palm"), puntos: 0, es: "Diminuto (cabe en la palma de la mano)", corto: "diminuto" },
+]
+
+const OPCIONES_PROFUNDIDAD = [
+  { test: t => t.includes("deep") || t.includes("like a bowl"), puntos: 3, es: "Profunda (más de 8 cm, como un tazón)", corto: "profunda" },
+  { test: t => t.includes("moderate"), puntos: 2, es: "Moderada (3 a 8 cm)", corto: "moderada" },
+  { test: t => t.includes("shallow"), puntos: 1, es: "Superficial (menos de 3 cm)", corto: "superficial" },
+  { test: t => t.includes("barely visible"), puntos: 0, es: "Apenas visible", corto: "apenas visible" },
+]
+
+const OPCIONES_UBICACION = [
+  { test: t => t.includes("center of traffic"), puntos: 3, es: "Centro del carril de tránsito", corto: "el centro del carril de tránsito" },
+  { test: t => t.includes("side lane"), puntos: 2, es: "Carril lateral", corto: "el carril lateral" },
+  { test: t => t.includes("edge") || t.includes("shoulder"), puntos: 1, es: "Borde de la vía o banquina", corto: "el borde de la vía" },
+]
+
+const OPCIONES_DANIO = [
+  { test: t => t.includes("large broken"), puntos: 2, corto: "una superficie grande fracturada" },
+  { test: t => t.includes("crumbled"), puntos: 1, corto: "bordes desmoronados" },
+  { test: t => t.includes("isolated small crack"), puntos: 0, corto: "una grieta pequeña aislada" },
+]
+
+function clasificar(texto, opciones) {
+  return opciones.find(op => op.test(texto)) || null
+}
 
 function calcularPeligro(respuestaIA) {
   const t = respuestaIA.toLowerCase()
 
-  let puntos = 0
+  const tamano = clasificar(t, OPCIONES_TAMANO)
+  const profundidad = clasificar(t, OPCIONES_PROFUNDIDAD)
+  const ubicacion = clasificar(t, OPCIONES_UBICACION)
+  const danio = clasificar(t, OPCIONES_DANIO)
 
-  // SIZE (0-3)
-  if (t.includes("large") || t.includes("bigger than a backpack")) puntos += 3
-  else if (t.includes("medium") || t.includes("backpack-sized")) puntos += 2
-  else if (t.includes("small") || t.includes("shoe-sized")) puntos += 1
-
-  // DEPTH (0-3)
-  if (t.includes("deep") || t.includes("like a bowl")) puntos += 3
-  else if (t.includes("moderate")) puntos += 2
-  else if (t.includes("shallow")) puntos += 1
-
-  // LOCATION (0-3)
-  if (t.includes("center of traffic")) puntos += 3
-  else if (t.includes("side lane")) puntos += 2
-  else if (t.includes("edge") || t.includes("shoulder")) puntos += 1
-
-  // DAMAGE (0-2)
-  if (t.includes("large broken")) puntos += 2
-  else if (t.includes("crumbled")) puntos += 1
+  const puntos = (tamano?.puntos || 0) + (profundidad?.puntos || 0) + (ubicacion?.puntos || 0) + (danio?.puntos || 0)
 
   // Normalizar a escala 1-10 (máximo posible = 11)
   const nivel = Math.max(1, Math.min(10, Math.round((puntos / 11) * 10)))
@@ -85,12 +108,13 @@ function calcularPeligro(respuestaIA) {
   else if (nivel <= 7) categoria = "ALTO"
   else categoria = "CRÍTICO"
 
-  return { nivel_peligro: nivel, categoria }
+  return { nivel_peligro: nivel, categoria, tamano, profundidad, ubicacion, danio }
 }
 
-function extraerCampo(texto, campo) {
-  const match = texto.match(new RegExp(`${campo}:\\s*(.+)`, "i"))
-  return match ? match[1].trim() : null
+function construirDescripcion({ tamano, profundidad, ubicacion, danio }) {
+  let descripcion = `Bache de tamaño ${tamano ? tamano.corto : "no determinado"}, con profundidad ${profundidad ? profundidad.corto : "no determinada"}, ubicado en ${ubicacion ? ubicacion.corto : "una posición no determinada de la vía"}.`
+  if (danio) descripcion += ` Se observa ${danio.corto}.`
+  return descripcion
 }
 
 function mapearRiesgo(nivel) {
@@ -108,7 +132,7 @@ function mapearRecomendacion(nivel) {
 }
 
 async function analizarImagenBache(imagePath) {
-  const imagenBase64 = imageToBase64(imagePath)
+  const imagenBase64 = await imageToBase64(imagePath)
 
   const respuesta = await axios.post(
     OLLAMA_URL,
@@ -123,15 +147,15 @@ async function analizarImagenBache(imagePath) {
   const texto = respuesta?.data?.message?.content || ""
   console.log("Respuesta llava:", texto)
 
-  const { nivel_peligro, categoria } = calcularPeligro(texto)
+  const { nivel_peligro, categoria, tamano, profundidad, ubicacion, danio } = calcularPeligro(texto)
 
   return {
     nivel_peligro,
     categoria,
-    dimension_estimada: extraerCampo(texto, "SIZE"),
-    profundidad_estimada: extraerCampo(texto, "DEPTH"),
-    ubicacion_en_via: extraerCampo(texto, "LOCATION"),
-    descripcion: extraerCampo(texto, "DESCRIPTION") || texto.split("\n").pop()?.trim(),
+    dimension_estimada: tamano?.es || null,
+    profundidad_estimada: profundidad?.es || null,
+    ubicacion_en_via: ubicacion?.es || null,
+    descripcion: construirDescripcion({ tamano, profundidad, ubicacion, danio }),
     riesgos: mapearRiesgo(nivel_peligro),
     recomendacion: mapearRecomendacion(nivel_peligro),
   }
