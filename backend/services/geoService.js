@@ -1,6 +1,8 @@
 const axios = require("axios")
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
+const NOMINATIM_REVERSE_URL = "https://nominatim.openstreetmap.org/reverse"
+const USER_AGENT = "AnalizadorDeBaches/1.0 (uso local)"
 
 // Nominatim (OpenStreetMap) es gratuito y no requiere API key, pero exige un
 // User-Agent identificable y un máximo de 1 solicitud por segundo.
@@ -9,7 +11,7 @@ async function geocodificarDireccion(direccion) {
     // countrycodes acota los resultados a Paraguay: sin esto, direcciones
     // ambiguas o cortas ("España") pueden geocodificarse en otro país.
     params: { q: direccion, format: "json", limit: 1, countrycodes: "py" },
-    headers: { "User-Agent": "AnalizadorDeBaches/1.0 (uso local)" },
+    headers: { "User-Agent": USER_AGENT },
     timeout: 15000,
   })
 
@@ -19,4 +21,16 @@ async function geocodificarDireccion(direccion) {
   return { lat: parseFloat(resultado.lat), lon: parseFloat(resultado.lon) }
 }
 
-module.exports = { geocodificarDireccion }
+// Geocodificación inversa: convierte coordenadas GPS (del celular) en una
+// dirección legible para pre-completar el formulario de reporte.
+async function direccionDesdeCoordenadas(lat, lon) {
+  const respuesta = await axios.get(NOMINATIM_REVERSE_URL, {
+    params: { lat, lon, format: "json", zoom: 18 },
+    headers: { "User-Agent": USER_AGENT, "Accept-Language": "es" },
+    timeout: 15000,
+  })
+
+  return respuesta.data?.display_name || null
+}
+
+module.exports = { geocodificarDireccion, direccionDesdeCoordenadas }

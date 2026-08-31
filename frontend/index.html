@@ -1,75 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Analizador de Baches</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <div class="container">
-    <h1>Analizador de Baches</h1>
-
-    <div class="card">
-      <h2>Iniciar sesión</h2>
-
-      <label for="email">Email:</label>
-      <input type="email" id="email" placeholder="tu@email.com">
-
-      <label for="password">Contraseña:</label>
-      <input type="password" id="password" placeholder="Contraseña">
-
-      <button onclick="iniciarSesion()">Ingresar</button>
-
-      <div id="estadoLogin" class="estado"></div>
-
-      <div class="auth-links">
-        ¿No tenés cuenta? <a href="registro.html">Registrate</a>
-      </div>
-    </div>
-  </div>
-
-  <script src="auth.js"></script>
-  <script>
-    redirigirSiYaHaySesion()
-
-    const params = new URLSearchParams(window.location.search)
-    if (params.get("registrado")) {
-      document.getElementById("estadoLogin").innerHTML = '<span class="ok-msg">Cuenta creada. Ya podés iniciar sesión.</span>'
-    }
-
-    async function iniciarSesion() {
-      const email = document.getElementById("email").value.trim()
-      const password = document.getElementById("password").value
-      const estado = document.getElementById("estadoLogin")
-
-      if (!email || !password) {
-        estado.innerHTML = '<span class="error-msg">Completá email y contraseña.</span>'
-        return
-      }
-
-      estado.innerHTML = "⏳ Ingresando..."
-
-      try {
-        const res = await fetch(`${API_BASE}/api/auth/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password })
-        })
-        const data = await res.json()
-
-        if (!res.ok) {
-          estado.innerHTML = `<span class="error-msg">${data.error || "No se pudo iniciar sesión."}</span>`
-          return
-        }
-
-        guardarSesion(data.token, data.usuario)
-        window.location.href = data.usuario.rol === "admin" ? "admin.html" : "reportar.html"
-      } catch (err) {
-        console.error(err)
-        estado.innerHTML = '<span class="error-msg">Error de conexión con el servidor.</span>'
-      }
-    }
-  </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analizador de Baches</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

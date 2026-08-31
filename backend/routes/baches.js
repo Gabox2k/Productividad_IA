@@ -4,7 +4,7 @@ const path = require("path")
 const fs = require("fs")
 const crypto = require("crypto")
 const { analizarBache } = require("../services/bacheService")
-const { geocodificarDireccion } = require("../services/geoService")
+const { geocodificarDireccion, direccionDesdeCoordenadas } = require("../services/geoService")
 const reportesRepo = require("../db/reportesRepo")
 const { requireAuth, requireAdmin } = require("../middleware/auth")
 
@@ -90,7 +90,17 @@ async function procesarReporte(req, res, archivo) {
     return res.status(400).json({ error: "La dirección es obligatoria." })
   }
 
-  const ubicacion = await geocodificarDireccion(direccion)
+  // Si el frontend ya mandó coordenadas GPS precisas (geolocalización del
+  // celular), se usan directamente y se evita re-geocodificar la dirección
+  // escrita/derivada, que podría ubicar el punto de forma menos exacta.
+  const latGPS = parseFloat(req.body.latitud)
+  const lonGPS = parseFloat(req.body.longitud)
+  const tieneCoordenadasGPS = !Number.isNaN(latGPS) && !Number.isNaN(lonGPS)
+
+  const ubicacion = tieneCoordenadasGPS
+    ? { lat: latGPS, lon: lonGPS }
+    : await geocodificarDireccion(direccion)
+
   if (!ubicacion) {
     borrarSiExiste(archivo.path)
     return res.status(422).json({ error: "No se pudo ubicar esa dirección en el mapa. Verificala e intentá de nuevo." })
@@ -130,6 +140,22 @@ async function procesarReporte(req, res, archivo) {
 
   res.status(201).json(shapeReporte(reporte))
 }
+
+router.get("/baches/direccion-actual", requireAuth, async (req, res) => {
+  const lat = parseFloat(req.query.lat)
+  const lon = parseFloat(req.query.lon)
+  if (Number.isNaN(lat) || Number.isNaN(lon)) {
+    return res.status(400).json({ error: "Coordenadas inválidas." })
+  }
+
+  try {
+    const direccion = await direccionDesdeCoordenadas(lat, lon)
+    res.json({ direccion })
+  } catch (err) {
+    console.error("Error en /api/baches/direccion-actual:", err)
+    res.status(502).json({ error: "No se pudo obtener la dirección de tu ubicación." })
+  }
+})
 
 router.get("/baches/mis-reportes", requireAuth, (req, res) => {
   const reportes = reportesRepo.listarPorUsuario(req.usuario.id)

@@ -20,8 +20,9 @@ app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// Servir el frontend (html, css, js) de forma estática, incluyendo index.html en "/"
-app.use(express.static(path.join(__dirname, "../frontend")))
+// Servir el build de producción del frontend (React + Vite)
+const FRONTEND_DIST = path.join(__dirname, "../frontend/dist")
+app.use(express.static(FRONTEND_DIST))
 
 // Servir las fotos/videos persistidos de los reportes de baches
 app.use("/archivos-baches", express.static(path.join(__dirname, "uploads_baches")))
@@ -29,6 +30,12 @@ app.use("/archivos-baches", express.static(path.join(__dirname, "uploads_baches"
 // Usar las rutas de la API bajo /api
 app.use("/api", authRouter)
 app.use("/api", bachesRouter)
+
+// El resto de rutas (que no sean /api ni archivos-baches) las resuelve el
+// router de React en el cliente, así que siempre se sirve el index.html.
+app.get(/^\/(?!api|archivos-baches).*/, (req, res) => {
+  res.sendFile(path.join(FRONTEND_DIST, "index.html"))
+})
 
 // Puerto del servidor
 const PORT = 5000
