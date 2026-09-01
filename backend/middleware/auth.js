@@ -17,13 +17,21 @@ function requireAuth(req, res, next) {
   }
 }
 
-function requireAdmin(req, res, next) {
-  requireAuth(req, res, () => {
-    if (req.usuario.rol !== "admin") {
-      return res.status(403).json({ error: "Requiere rol de administrador." })
-    }
-    next()
-  })
+// Middleware genérico: solo deja pasar a los roles indicados.
+function requireRole(...rolesPermitidos) {
+  return (req, res, next) => {
+    requireAuth(req, res, () => {
+      if (!rolesPermitidos.includes(req.usuario.rol)) {
+        return res.status(403).json({ error: "No tenés permisos para realizar esta acción." })
+      }
+      next()
+    })
+  }
 }
 
-module.exports = { requireAuth, requireAdmin }
+const requireAdmin = requireRole("admin")
+// El personal de mantenimiento (trabajador) también gestiona el estado de
+// los reportes, igual que el admin.
+const requireStaff = requireRole("admin", "trabajador")
+
+module.exports = { requireAuth, requireRole, requireAdmin, requireStaff }

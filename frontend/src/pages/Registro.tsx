@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react"
 import { Link, Navigate, useNavigate } from "react-router-dom"
+import { INICIO_POR_ROL } from "../components/RequireRole"
 import { useAuth } from "../context/AuthContext"
 
 export function Registro() {
@@ -12,7 +13,7 @@ export function Registro() {
   const [cargando, setCargando] = useState(false)
 
   if (usuario) {
-    return <Navigate to={usuario.rol === "admin" ? "/mapa" : "/reportar"} replace />
+    return <Navigate to={INICIO_POR_ROL[usuario.rol]} replace />
   }
 
   async function manejarSubmit(e: FormEvent) {

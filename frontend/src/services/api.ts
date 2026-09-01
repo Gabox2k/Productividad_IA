@@ -1,4 +1,4 @@
-import type { Estado, Reporte, Usuario } from "../types"
+import type { Estado, Reporte, Rol, Usuario, UsuarioAdmin } from "../types"
 
 const TOKEN_KEY = "token"
 
@@ -99,9 +99,31 @@ export const api = {
     return pedido<Reporte[]>("/api/baches/todos")
   },
 
+  reportesPublicos() {
+    return pedido<Reporte[]>("/api/baches/publicos")
+  },
+
   marcarReparado(id: number) {
     return pedido<{ id: number; estado: Estado; reparado_en: string }>(`/api/baches/${id}/reparado`, {
       method: "PATCH",
+    })
+  },
+
+  rechazarReparacion(id: number) {
+    return pedido<{ id: number; estado: Estado }>(`/api/baches/${id}/rechazar-reparacion`, {
+      method: "PATCH",
+    })
+  },
+
+  usuarios() {
+    return pedido<UsuarioAdmin[]>("/api/usuarios")
+  },
+
+  cambiarRol(id: number, rol: Rol) {
+    return pedido<Usuario>(`/api/usuarios/${id}/rol`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rol }),
     })
   },
 }

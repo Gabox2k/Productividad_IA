@@ -1,6 +1,7 @@
 import L from "leaflet"
-import { useEffect, useMemo, type ReactNode } from "react"
+import { useEffect, useMemo, useRef, type ReactNode } from "react"
 import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet"
+import type { Coordenadas } from "../utils/distancia"
 
 export interface MapPoint {
   id: string | number
@@ -12,21 +13,55 @@ export interface MapPoint {
 
 const ASUNCION: [number, number] = [-25.2637, -57.5759]
 const COLOR_DEFAULT = "#f59e0b"
+const COLOR_MI_UBICACION = "#2563eb"
 
-function AjustarVista({ puntos }: { puntos: [number, number][] }) {
+function AjustarVista({
+  puntos,
+  miUbicacion,
+  centrarEnMiUbicacion,
+}: {
+  puntos: [number, number][]
+  miUbicacion?: Coordenadas | null
+  centrarEnMiUbicacion?: boolean
+}) {
   const mapa = useMap()
+  const yaAjustado = useRef(false)
+
   useEffect(() => {
-    if (puntos.length === 0) return
-    if (puntos.length === 1) {
-      mapa.setView(puntos[0], 15)
-    } else {
-      mapa.fitBounds(L.latLngBounds(puntos), { padding: [30, 30], maxZoom: 15 })
+    if (yaAjustado.current) return
+
+    if (centrarEnMiUbicacion && miUbicacion) {
+      mapa.setView([miUbicacion.lat, miUbicacion.lon], 16)
+      yaAjustado.current = true
+      return
     }
-  }, [mapa, puntos])
+
+    const todos: [number, number][] = miUbicacion ? [...puntos, [miUbicacion.lat, miUbicacion.lon]] : puntos
+    if (todos.length === 0) return
+
+    if (todos.length === 1) {
+      mapa.setView(todos[0], 15)
+    } else {
+      mapa.fitBounds(L.latLngBounds(todos), { padding: [30, 30], maxZoom: 15 })
+    }
+    yaAjustado.current = true
+    // El ajuste solo debe ocurrir una vez, al llegar los primeros datos: si
+    // corriera en cada actualización (polling, GPS en vivo), el mapa
+    // saltaría solo mientras el usuario lo está mirando o navegando.
+  }, [mapa, puntos, miUbicacion, centrarEnMiUbicacion])
+
   return null
 }
 
-export function ReportMap({ puntos }: { puntos: MapPoint[] }) {
+export function ReportMap({
+  puntos,
+  miUbicacion,
+  centrarEnMiUbicacion,
+}: {
+  puntos: MapPoint[]
+  miUbicacion?: Coordenadas | null
+  centrarEnMiUbicacion?: boolean
+}) {
   const coords = useMemo<[number, number][]>(() => puntos.map((p) => [p.lat, p.lon]), [puntos])
 
   return (
@@ -35,7 +70,7 @@ export function ReportMap({ puntos }: { puntos: MapPoint[] }) {
         attribution="&copy; OpenStreetMap contributors"
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <AjustarVista puntos={coords} />
+      <AjustarVista puntos={coords} miUbicacion={miUbicacion} centrarEnMiUbicacion={centrarEnMiUbicacion} />
       {puntos.map((p) => (
         <CircleMarker
           key={p.id}
@@ -46,6 +81,15 @@ export function ReportMap({ puntos }: { puntos: MapPoint[] }) {
           {p.popup && <Popup minWidth={220}>{p.popup}</Popup>}
         </CircleMarker>
       ))}
+      {miUbicacion && (
+        <CircleMarker
+          center={[miUbicacion.lat, miUbicacion.lon]}
+          radius={8}
+          pathOptions={{ color: "#ffffff", fillColor: COLOR_MI_UBICACION, fillOpacity: 1, weight: 3 }}
+        >
+          <Popup minWidth={120}>Tu ubicación</Popup>
+        </CircleMarker>
+      )}
     </MapContainer>
   )
 }

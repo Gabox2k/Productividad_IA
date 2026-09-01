@@ -17,7 +17,7 @@ db.exec(`
     nombre        TEXT NOT NULL,
     email         TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    rol           TEXT NOT NULL DEFAULT 'usuario' CHECK (rol IN ('usuario','admin')),
+    rol           TEXT NOT NULL DEFAULT 'usuario' CHECK (rol IN ('usuario','trabajador','admin')),
     creado_en     TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
@@ -45,5 +45,27 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_reportes_usuario ON reportes_baches(usuario_id);
   CREATE INDEX IF NOT EXISTS idx_reportes_estado  ON reportes_baches(estado);
 `)
+
+// Migración: las bases de datos creadas antes del rol "trabajador" tienen la
+// tabla usuarios con un CHECK que solo permite 'usuario'/'admin'. SQLite no
+// permite alterar un CHECK existente, así que hay que recrear la tabla.
+const esquemaUsuarios = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'usuarios'").get()
+if (esquemaUsuarios && !esquemaUsuarios.sql.includes("trabajador")) {
+  db.pragma("foreign_keys = OFF")
+  db.exec(`
+    CREATE TABLE usuarios_nueva (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre        TEXT NOT NULL,
+      email         TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      rol           TEXT NOT NULL DEFAULT 'usuario' CHECK (rol IN ('usuario','trabajador','admin')),
+      creado_en     TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    INSERT INTO usuarios_nueva SELECT * FROM usuarios;
+    DROP TABLE usuarios;
+    ALTER TABLE usuarios_nueva RENAME TO usuarios;
+  `)
+  db.pragma("foreign_keys = ON")
+}
 
 module.exports = db

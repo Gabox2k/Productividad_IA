@@ -1,10 +1,14 @@
-export type Rol = "usuario" | "admin"
+export type Rol = "usuario" | "trabajador" | "admin"
 
 export interface Usuario {
   id: number
   nombre: string
   email: string
   rol: Rol
+}
+
+export interface UsuarioAdmin extends Usuario {
+  creado_en: string
 }
 
 export type Categoria = "BAJO" | "MEDIO" | "ALTO" | "CRÍTICO" | "CRITICO"

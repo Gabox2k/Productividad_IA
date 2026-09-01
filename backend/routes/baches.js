@@ -6,7 +6,7 @@ const crypto = require("crypto")
 const { analizarBache } = require("../services/bacheService")
 const { geocodificarDireccion, direccionDesdeCoordenadas } = require("../services/geoService")
 const reportesRepo = require("../db/reportesRepo")
-const { requireAuth, requireAdmin } = require("../middleware/auth")
+const { requireAuth, requireStaff } = require("../middleware/auth")
 
 const router = express.Router()
 
@@ -157,22 +157,40 @@ router.get("/baches/direccion-actual", requireAuth, async (req, res) => {
   }
 })
 
+// Mapa en vivo: cualquier usuario autenticado puede ver los reportes de
+// todos (para detectar baches cercanos mientras se mueve), pero sin el
+// nombre/email del vecino que los cargó, a diferencia de /baches/todos.
+router.get("/baches/publicos", requireAuth, (req, res) => {
+  const reportes = reportesRepo.listarPublicos()
+  res.json(reportes.map(shapeReporte))
+})
+
 router.get("/baches/mis-reportes", requireAuth, (req, res) => {
   const reportes = reportesRepo.listarPorUsuario(req.usuario.id)
   res.json(reportes.map(shapeReporte))
 })
 
-router.get("/baches/todos", requireAdmin, (req, res) => {
+router.get("/baches/todos", requireStaff, (req, res) => {
   const reportes = reportesRepo.listarTodos()
   res.json(reportes.map(shapeReporte))
 })
 
-router.patch("/baches/:id/reparado", requireAdmin, (req, res) => {
+router.patch("/baches/:id/reparado", requireStaff, (req, res) => {
   const reporte = reportesRepo.marcarReparado(req.params.id)
   if (!reporte) {
     return res.status(404).json({ error: "Reporte no encontrado." })
   }
   res.json({ id: reporte.id, estado: reporte.estado, reparado_en: reporte.reparado_en })
+})
+
+// Cualquier vecino puede desmentir una reparación marcada por el admin: el
+// reporte vuelve a "pendiente" para que se repare de verdad.
+router.patch("/baches/:id/rechazar-reparacion", requireAuth, (req, res) => {
+  const reporte = reportesRepo.rechazarReparacion(req.params.id)
+  if (!reporte) {
+    return res.status(404).json({ error: "El reporte no existe o no está marcado como reparado." })
+  }
+  res.json({ id: reporte.id, estado: reporte.estado })
 })
 
 module.exports = router

@@ -1,5 +1,7 @@
 const db = require("./database")
 
+const ROLES_VALIDOS = ["usuario", "trabajador", "admin"]
+
 function crear({ nombre, email, password_hash }) {
   const stmt = db.prepare(
     "INSERT INTO usuarios (nombre, email, password_hash) VALUES (?, ?, ?)"
@@ -23,4 +25,17 @@ function promoverAdmin(email) {
   return info.changes > 0
 }
 
-module.exports = { crear, buscarPorEmail, buscarPorId, promoverAdmin }
+function listarTodos() {
+  return db
+    .prepare("SELECT id, nombre, email, rol, creado_en FROM usuarios ORDER BY creado_en DESC")
+    .all()
+}
+
+function actualizarRol(id, rol) {
+  if (!ROLES_VALIDOS.includes(rol)) return null
+  const info = db.prepare("UPDATE usuarios SET rol = ? WHERE id = ?").run(rol, id)
+  if (info.changes === 0) return null
+  return buscarPorId(id)
+}
+
+module.exports = { crear, buscarPorEmail, buscarPorId, promoverAdmin, listarTodos, actualizarRol, ROLES_VALIDOS }

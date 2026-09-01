@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { ConfirmarReparacion, estaConfirmadoLocalmente } from "../components/ConfirmarReparacion"
 import { EstadoBadge, SeverityBadge } from "../components/SeverityBadge"
 import { StatCard } from "../components/StatCard"
 import { api } from "../services/api"
@@ -8,14 +9,26 @@ export function MisReportes() {
   const [reportes, setReportes] = useState<Reporte[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [tick, setTick] = useState(0)
 
-  useEffect(() => {
+  function cargar() {
     api
       .misReportes()
       .then(setReportes)
       .catch((err) => setError(err instanceof Error ? err.message : "No se pudieron cargar tus reportes."))
       .finally(() => setCargando(false))
-  }, [])
+  }
+
+  useEffect(cargar, [])
+
+  function refrescarTrasConfirmacion() {
+    // "Sí, está reparado" solo actualiza localStorage (no cambia nada en el
+    // servidor); forzamos un re-render para que el badge reemplace al
+    // recuadro de confirmación. "Sigue roto" sí cambió el servidor, así que
+    // además recargamos la lista.
+    setTick((t) => t + 1)
+    cargar()
+  }
 
   const pendientes = reportes.filter((r) => r.estado === "pendiente").length
   const reparados = reportes.filter((r) => r.estado === "reparado").length
@@ -51,27 +64,34 @@ export function MisReportes() {
                 </tr>
               </thead>
               <tbody>
-                {reportes.map((r) => (
-                  <tr key={r.id} className="border-b border-neutral-100 last:border-0">
-                    <td className="px-5 py-3">
-                      {r.archivo_tipo === "video" ? (
-                        <video src={r.archivo_url} className="h-12 w-12 rounded-lg object-cover" />
-                      ) : (
-                        <img src={r.archivo_url} alt="Bache" className="h-12 w-12 rounded-lg object-cover" />
-                      )}
-                    </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-neutral-600">
-                      {new Date(r.creado_en).toLocaleDateString("es-PY")}
-                    </td>
-                    <td className="px-5 py-3 text-neutral-900">{r.direccion}</td>
-                    <td className="px-5 py-3">
-                      <SeverityBadge categoria={r.categoria} nivel={r.nivel_peligro} />
-                    </td>
-                    <td className="px-5 py-3">
-                      <EstadoBadge estado={r.estado} />
-                    </td>
-                  </tr>
-                ))}
+                {reportes.map((r) => {
+                  const pideConfirmacion = r.estado === "reparado" && !estaConfirmadoLocalmente(r.id)
+                  return (
+                    <tr key={`${r.id}-${tick}`} className="border-b border-neutral-100 last:border-0">
+                      <td className="px-5 py-3">
+                        {r.archivo_tipo === "video" ? (
+                          <video src={r.archivo_url} className="h-12 w-12 rounded-lg object-cover" />
+                        ) : (
+                          <img src={r.archivo_url} alt="Bache" className="h-12 w-12 rounded-lg object-cover" />
+                        )}
+                      </td>
+                      <td className="px-5 py-3 whitespace-nowrap text-neutral-600">
+                        {new Date(r.creado_en).toLocaleDateString("es-PY")}
+                      </td>
+                      <td className="px-5 py-3 text-neutral-900">{r.direccion}</td>
+                      <td className="px-5 py-3">
+                        <SeverityBadge categoria={r.categoria} nivel={r.nivel_peligro} />
+                      </td>
+                      <td className="px-5 py-3">
+                        {pideConfirmacion ? (
+                          <ConfirmarReparacion id={r.id} onCambio={refrescarTrasConfirmacion} />
+                        ) : (
+                          <EstadoBadge estado={r.estado} />
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react"
+import { AlertaProximidad } from "../components/AlertaProximidad"
 import { EstadoBadge, SeverityBadge } from "../components/SeverityBadge"
 import { ReportMap, type MapPoint } from "../components/ReportMap"
+import { useAuth } from "../context/AuthContext"
+import { useUbicacionEnVivo } from "../hooks/useUbicacionEnVivo"
 import { api } from "../services/api"
 import type { Reporte } from "../types"
+
+const INTERVALO_ACTUALIZACION_MS = 18000
 
 const COLOR_CATEGORIA: Record<string, string> = {
   BAJO: "#16a34a",
@@ -19,13 +24,14 @@ function colorDe(reporte: Reporte) {
 }
 
 export function Mapa() {
+  const { usuario } = useAuth()
   const [reportes, setReportes] = useState<Reporte[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [actualizandoId, setActualizandoId] = useState<number | null>(null)
+  const { ubicacion, error: errorUbicacion } = useUbicacionEnVivo()
 
   function cargar() {
-    setCargando(true)
     api
       .todosLosReportes()
       .then(setReportes)
@@ -33,7 +39,11 @@ export function Mapa() {
       .finally(() => setCargando(false))
   }
 
-  useEffect(cargar, [])
+  useEffect(() => {
+    cargar()
+    const intervalo = setInterval(cargar, INTERVALO_ACTUALIZACION_MS)
+    return () => clearInterval(intervalo)
+  }, [])
 
   async function marcarReparado(id: number) {
     setActualizandoId(id)
@@ -82,16 +92,23 @@ export function Mapa() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-neutral-900">Mapa de Reportes</h1>
+          <h1 className="text-3xl font-bold text-neutral-900">
+            {usuario?.rol === "trabajador" ? "Reportes a Reparar" : "Mapa de Reportes"}
+          </h1>
           <p className="mt-1 text-neutral-500">{pendientes} bache(s) pendiente(s) de {reportes.length} reportados en total.</p>
         </div>
       </div>
 
+      <div className="mb-4 flex flex-col gap-2">
+        <AlertaProximidad ubicacion={ubicacion} reportes={reportes} />
+        {errorUbicacion && <p className="text-sm text-neutral-500">📍 {errorUbicacion}</p>}
+      </div>
+
       <div className="grid flex-1 grid-cols-1 gap-6 overflow-hidden lg:grid-cols-[1fr_360px]">
         <div className="min-h-[420px] overflow-hidden rounded-2xl border border-neutral-200 bg-white">
-          {!cargando && <ReportMap puntos={puntos} />}
+          {!cargando && <ReportMap puntos={puntos} miUbicacion={ubicacion} />}
         </div>
 
         <div className="flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white">

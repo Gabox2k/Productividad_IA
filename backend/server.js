@@ -12,6 +12,7 @@ if (!process.env.JWT_SECRET) {
 
 const authRouter = require("./routes/auth")
 const bachesRouter = require("./routes/baches")
+const usuariosRouter = require("./routes/usuarios")
 
 const app = express()
 
@@ -30,6 +31,7 @@ app.use("/archivos-baches", express.static(path.join(__dirname, "uploads_baches"
 // Usar las rutas de la API bajo /api
 app.use("/api", authRouter)
 app.use("/api", bachesRouter)
+app.use("/api", usuariosRouter)
 
 // El resto de rutas (que no sean /api ni archivos-baches) las resuelve el
 // router de React en el cliente, así que siempre se sirve el index.html.

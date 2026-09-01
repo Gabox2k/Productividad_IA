@@ -37,6 +37,13 @@ function listarTodos() {
     .all()
 }
 
+// Para el mapa en vivo de cualquier usuario autenticado: mismos reportes,
+// pero sin datos del vecino que los cargó (nombre/email quedan solo para
+// la vista de administración).
+function listarPublicos() {
+  return db.prepare("SELECT * FROM reportes_baches ORDER BY creado_en DESC").all()
+}
+
 function marcarReparado(id) {
   const info = db
     .prepare("UPDATE reportes_baches SET estado = 'reparado', reparado_en = datetime('now') WHERE id = ?")
@@ -45,4 +52,14 @@ function marcarReparado(id) {
   return buscarPorId(id)
 }
 
-module.exports = { crear, buscarPorId, listarPorUsuario, listarTodos, marcarReparado }
+// Un vecino desmiente la reparación: vuelve a la cola del admin. Solo tiene
+// efecto sobre reportes que estén marcados como reparados (idempotente).
+function rechazarReparacion(id) {
+  const info = db
+    .prepare("UPDATE reportes_baches SET estado = 'pendiente', reparado_en = NULL WHERE id = ? AND estado = 'reparado'")
+    .run(id)
+  if (info.changes === 0) return null
+  return buscarPorId(id)
+}
+
+module.exports = { crear, buscarPorId, listarPorUsuario, listarTodos, listarPublicos, marcarReparado, rechazarReparacion }
